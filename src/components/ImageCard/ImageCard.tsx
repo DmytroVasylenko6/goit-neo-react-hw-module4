@@ -6,9 +6,10 @@ interface ImageCardProps {
   dataset?: string
   alt: string
   size: 'original' | 'preview'
+  onClick?: (e: React.MouseEvent<HTMLImageElement>) => void
 }
 
-function ImageCard({ src, dataset, alt, size }: ImageCardProps) {
+function ImageCard({ src, dataset, alt, size, onClick }: ImageCardProps) {
   const originalImg = s.original
   const previewImg = s.preview
 
@@ -29,6 +30,7 @@ function ImageCard({ src, dataset, alt, size }: ImageCardProps) {
         alt={alt}
         data-set={dataset}
         className={classNames(style.join(' '))}
+        onClick={onClick}
       />
     </>
   )

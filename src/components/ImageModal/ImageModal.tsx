@@ -1,15 +1,15 @@
 import { createPortal } from 'react-dom'
 import { useEffect } from 'react'
-import s from './Modal.module.css'
+import s from './ImageModal.module.css'
 
 const modalRoot = document.querySelector('#modal-root')
 
-interface ModalProps {
+interface ImageModalProps {
   children: React.ReactNode
   onClose: () => void
 }
 
-function Modal({ children, onClose }: ModalProps) {
+function ImageModal({ children, onClose }: ImageModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
@@ -39,4 +39,4 @@ function Modal({ children, onClose }: ModalProps) {
   )
 }
 
-export default Modal
+export default ImageModal
