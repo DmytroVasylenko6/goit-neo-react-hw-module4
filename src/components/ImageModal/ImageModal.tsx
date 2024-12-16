@@ -1,41 +1,49 @@
-import { createPortal } from 'react-dom'
-import { useEffect } from 'react'
-import s from './ImageModal.module.css'
+import ReactModal from 'react-modal'
+import ImageCard from '../ImageCard'
 
-const modalRoot = document.querySelector('#modal-root')
+interface ModalImage {
+  url: string | null
+  alt: string | null
+}
 
 interface ImageModalProps {
-  children: React.ReactNode
+  image: ModalImage
+  isOpen: boolean
   onClose: () => void
 }
 
-function ImageModal({ children, onClose }: ImageModalProps) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape') {
-        onClose()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
-
-  const handleBackDropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.currentTarget === e.target) {
-      onClose()
+function ImageModal({ image, isOpen, onClose }: ImageModalProps) {
+  const customStyles: ReactModal.Styles = {
+    overlay: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      zIndex: 1200,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    content: {
+      position: 'absolute',
+      padding: 0,
+      border: 'none',
+      background: 'none',
+      maxWidth: 'calc(100vw - 48px)',
+      maxHeight: 'calc(100vh - 24px)',
+      overflow: 'hidden',
+      inset: 'auto'
     }
   }
 
-  if (!modalRoot) return null
-
-  return createPortal(
-    <div className={s.Overlay} onClick={handleBackDropClick}>
-      <div className={s.Modal}>{children}</div>
-    </div>,
-    modalRoot
+  return (
+    <ReactModal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      style={customStyles}
+      ariaHideApp={false}
+      shouldCloseOnOverlayClick
+      shouldCloseOnEsc
+    >
+      <ImageCard src={image.url || ''} alt={image.alt || ''} size="original" />
+    </ReactModal>
   )
 }
 

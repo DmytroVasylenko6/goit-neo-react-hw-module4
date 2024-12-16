@@ -8,7 +8,6 @@ import pixabayAPI from '../services/pixabayAPI'
 import { ThreeDots } from 'react-loader-spinner'
 import Container from './Container'
 import LoadMoreBtn from './LoadMoreBtn'
-import ImageCard from './ImageCard'
 import ImageModal from './ImageModal'
 
 interface FormData {
@@ -28,90 +27,95 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
-  const [originalImage, setOriginalImage] = useState<string | null>(null)
-  const [alt, setAlt] = useState<string | null>(null)
+  const [modalImage, setModalImage] = useState<{
+    url: string | null
+    alt: string | null
+  }>({
+    url: null,
+    alt: null
+  })
+
+  const scroll = useCallback(() => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    })
+  }, [])
 
   const fetchImages = useCallback(
     async (searchValue: string, pageNumber: number) => {
       try {
+        setIsLoading(true)
         const data = await pixabayAPI(searchValue, pageNumber)
 
         if (data.hits.length === 0) {
           toast('No results were found for the given request!')
+          return
         }
 
-        setImages((prevImages) => [...prevImages, ...data.hits])
-        setIsLoading(false)
+        setImages((prevImages) =>
+          pageNumber === 1 ? data.hits : [...prevImages, ...data.hits]
+        )
         setPage((prevPage) => prevPage + 1)
         scroll()
       } catch (error) {
-        setIsLoading(false)
         toast((error as Error).message)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [scroll]
+  )
+
+  useEffect(() => {
+    if (!searchImage) return
+    fetchImages(searchImage, 1)
+  }, [searchImage, fetchImages])
+
+  const handleSearch = useCallback(({ name }: FormData) => {
+    setSearchImage(name)
+    setPage(1)
+    setImages([])
+  }, [])
+
+  const handleLoadMore = useCallback(() => {
+    fetchImages(searchImage, page)
+  }, [fetchImages, searchImage, page])
+
+  const toggleModal = useCallback(
+    (imageUrl: string | null = null, imageAlt: string | null = null) => {
+      setShowModal((prev) => !prev)
+      if (imageUrl && imageAlt) {
+        setModalImage({ url: imageUrl, alt: imageAlt })
       }
     },
     []
   )
 
-  useEffect(() => {
-    if (!searchImage) return
-
-    setIsLoading(true)
-    setPage(1)
-    setImages([])
-    fetchImages(searchImage, 1)
-  }, [searchImage, fetchImages])
-
-  const handleSearch = (formdata: FormData) => {
-    setSearchImage(formdata.name)
-  }
-
-  const updateImageGallery = () => {
-    setIsLoading(true)
-    fetchImages(searchImage, page)
-  }
-
-  const scroll = () => {
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth'
-    })
-  }
-
-  const openModal = (e: React.MouseEvent<HTMLElement>) => {
-    const target = e.target as HTMLImageElement
-    setShowModal(!showModal)
-    setOriginalImage(target.dataset.set || null)
-    setAlt(target.alt)
-  }
-
-  const closeModal = () => {
-    setShowModal(!showModal)
-  }
+  const handleOpenModal = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const target = e.target as HTMLImageElement
+      toggleModal(target.dataset.set, target.alt)
+    },
+    [toggleModal]
+  )
 
   return (
     <>
       <SearchBar onSearch={handleSearch} />
       <Section>
         {images.length > 0 && (
-          <ImageGallery images={images} onOpenModal={openModal} />
+          <ImageGallery images={images} onOpenModal={handleOpenModal} />
         )}
         <Container>
           {isLoading && <ThreeDots color="#ca347f" height={80} width={80} />}
           {images.length > 0 && !isLoading && (
-            <LoadMoreBtn onLoadMore={updateImageGallery} />
+            <LoadMoreBtn onLoadMore={handleLoadMore} />
           )}
         </Container>
       </Section>
       <ToastContainer autoClose={3000} />
-      {showModal && (
-        <ImageModal onClose={closeModal}>
-          <ImageCard
-            src={originalImage || ''}
-            alt={alt || ''}
-            size="original"
-          />
-        </ImageModal>
-      )}
+      <ImageModal isOpen={showModal} image={modalImage} onClose={toggleModal} />
     </>
   )
 }
