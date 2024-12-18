@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import SearchBar from './SearchBar'
@@ -35,18 +35,13 @@ function App() {
     alt: null
   })
 
-  const scroll = useCallback(() => {
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth'
-    })
-  }, [])
+  useEffect(() => {
+    if (!searchImage) return
 
-  const fetchImages = useCallback(
-    async (searchValue: string, pageNumber: number) => {
+    async function fetchImages() {
       try {
         setIsLoading(true)
-        const data = await pixabayAPI(searchValue, pageNumber)
+        const data = await pixabayAPI(searchImage, page)
 
         if (data.hits.length === 0) {
           toast('No results were found for the given request!')
@@ -54,51 +49,47 @@ function App() {
         }
 
         setImages((prevImages) =>
-          pageNumber === 1 ? data.hits : [...prevImages, ...data.hits]
+          page === 1 ? data.hits : [...prevImages, ...data.hits]
         )
-        setPage((prevPage) => prevPage + 1)
-        scroll()
+
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth'
+        })
       } catch (error) {
         toast((error as Error).message)
       } finally {
         setIsLoading(false)
       }
-    },
-    [scroll]
-  )
+    }
 
-  useEffect(() => {
-    if (!searchImage) return
-    fetchImages(searchImage, 1)
-  }, [searchImage, fetchImages])
+    fetchImages()
+  }, [searchImage, page])
 
-  const handleSearch = useCallback(({ name }: FormData) => {
+  const handleSearch = ({ name }: FormData) => {
     setSearchImage(name)
     setPage(1)
     setImages([])
-  }, [])
+  }
 
-  const handleLoadMore = useCallback(() => {
-    fetchImages(searchImage, page)
-  }, [fetchImages, searchImage, page])
+  const handleLoadMore = () => {
+    setPage((prev) => prev + 1)
+  }
 
-  const toggleModal = useCallback(
-    (imageUrl: string | null = null, imageAlt: string | null = null) => {
-      setShowModal((prev) => !prev)
-      if (imageUrl && imageAlt) {
-        setModalImage({ url: imageUrl, alt: imageAlt })
-      }
-    },
-    []
-  )
+  const toggleModal = (
+    imageUrl: string | null = null,
+    imageAlt: string | null = null
+  ) => {
+    setShowModal((prev) => !prev)
+    if (imageUrl && imageAlt) {
+      setModalImage({ url: imageUrl, alt: imageAlt })
+    }
+  }
 
-  const handleOpenModal = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      const target = e.target as HTMLImageElement
-      toggleModal(target.dataset.set, target.alt)
-    },
-    [toggleModal]
-  )
+  const handleOpenModal = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLImageElement
+    toggleModal(target.dataset.set, target.alt)
+  }
 
   return (
     <>
