@@ -15,8 +15,14 @@ interface ImageGalleryProps {
 }
 
 function ImageGallery({ images, onOpenModal }: ImageGalleryProps) {
+  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLImageElement
+    if (target.tagName === 'IMG') {
+      onOpenModal(e)
+    }
+  }
   return (
-    <ul className={s.ImageGallery}>
+    <ul className={s.ImageGallery} onClick={handleClick}>
       {images.map((image) => {
         return (
           <li key={image.id} className={s.item}>
@@ -25,7 +31,6 @@ function ImageGallery({ images, onOpenModal }: ImageGalleryProps) {
               alt={image.tags}
               dataset={image.largeImageURL}
               size="preview"
-              onClick={onOpenModal}
             />
           </li>
         )
